@@ -11,7 +11,6 @@ documentation = "https://github.com/ukhan1219/dui#readme"
 readme = "README.md"
 keywords = ["docker", "cli", "container", "management", "interactive", "terminal"]
 categories = ["command-line-utilities"]
-license-file = "LICENSE"
 rust-version = "1.70.0"
 
 [dependencies]

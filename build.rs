@@ -9,7 +9,7 @@ fn main() {
     let version = extract_version(&cargo_toml);
     
     // Make the version available to the main code
-    println!("cargo:rustc-env=CARGO_PKG_VERSION={}", version);
+    println!("cargo:rustc-env=CARGO_PKG_VERSION={version}");
 }
 
 fn extract_version(cargo_toml: &str) -> String {
