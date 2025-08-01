@@ -28,3 +28,6 @@ Thumbs.db
 
 # Documentation
 /docs/site/
+/.github/
+/Formula/
+/scripts/
