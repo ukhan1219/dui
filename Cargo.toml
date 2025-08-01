@@ -1,6 +1,6 @@
 [package]
 name = "dui-cli"
-version = "3.1.0"
+version = "3.2.0"
 edition = "2021"
 authors = ["Usman Khan usman@usmankhan.dev"]
 description = "An intuitive Docker management CLI built in Rust"
