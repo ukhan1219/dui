@@ -82,6 +82,9 @@ jobs:
           echo "Total artifacts found:"
           find artifacts -type f -name "dui*" | wc -l
       
+      - name: Wait for GitHub API
+        run: sleep 30
+      
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
@@ -89,5 +92,7 @@ jobs:
           generate_release_notes: true
           draft: false
           prerelease: false
+          fail_on_unmatched_files: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        timeout-minutes: 10 
