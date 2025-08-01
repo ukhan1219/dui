@@ -1371,10 +1371,10 @@ fn handle_interactive_image_menu(docker: &DockerClient, ui: &UserInterface, imag
                     if index > 0 && index <= images.len() {
                         let image = &images[index - 1];
                         let image_name = format!("{}:{}", image.repository, image.tag);
-                        ui.show_loading(&format!("Saving image '{}' to '{}'...", image_name, file));
+                        ui.show_loading(&format!("Saving image '{image_name}' to '{file}'..."));
                         match docker.save_image(&image_name, file) {
-                            Ok(_) => ui.show_success(&format!("Image '{}' saved successfully to '{}'", image_name, file)),
-                            Err(e) => ui.show_error(&format!("Failed to save image: {}", e)),
+                            Ok(_) => ui.show_success(&format!("Image '{image_name}' saved successfully to '{file}'")),
+                            Err(e) => ui.show_error(&format!("Failed to save image: {e}")),
                         }
                     } else {
                         ui.show_error("Invalid image number");
