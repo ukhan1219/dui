@@ -147,7 +147,11 @@ release() {
     
     # Commit version bump
     print_status "Committing version bump..."
-    git add Cargo.toml Cargo.lock
+    git add Cargo.toml
+    # Force add Cargo.lock if it exists and has changes
+    if [ -f "Cargo.lock" ]; then
+        git add -f Cargo.lock
+    fi
     git commit -m "chore: bump version to $new_version"
     
     # Push changes
