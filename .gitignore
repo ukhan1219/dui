@@ -3,11 +3,6 @@
 **/*.rs.bk
 Cargo.lock
 
-
-.github
-Formula
-scripts
-
 # IDE
 .vscode/
 .idea/
