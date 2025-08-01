@@ -21,19 +21,19 @@ An intuitive Docker management CLI tool built with Rust that provides a GUI-like
 
 ### Build from Source
 
-\`\`\`bash
+``` bash
 git clone https://github.com/yourusername/docker-gui-cli.git
 cd docker-gui-cli
 cargo build --release
-\`\`\`
+```
 
 The binary will be available at `target/release/docker-cli`.
 
 ### Install via Cargo
 
-\`\`\`bash
+``` bash
 cargo install docker-gui-cli
-\`\`\`
+```
 
 ## Usage
 
@@ -41,7 +41,7 @@ cargo install docker-gui-cli
 
 #### Container Management
 
-\`\`\`bash
+``` bash
 # List all containers
 docker-cli containers list
 
@@ -56,11 +56,11 @@ docker-cli containers remove my-container
 
 # View container logs
 docker-cli containers logs my-container
-\`\`\`
+```
 
 #### Image Management
 
-\`\`\`bash
+``` bash
 # List all images
 docker-cli images list
 
@@ -69,11 +69,11 @@ docker-cli images pull nginx:latest
 
 # Remove an image
 docker-cli images remove nginx:latest
-\`\`\`
+```
 
 #### Resource Monitoring
 
-\`\`\`bash
+``` bash
 # View container statistics
 docker-cli monitor stats
 
@@ -82,14 +82,14 @@ docker-cli monitor system
 
 # Monitor Docker events (real-time)
 docker-cli monitor events
-\`\`\`
+```
 
 #### Interactive Mode
 
-\`\`\`bash
+``` bash
 # Launch interactive mode
 docker-cli interactive
-\`\`\`
+```
 
 In interactive mode, you can use simplified commands:
 - `containers` - List containers
@@ -100,7 +100,7 @@ In interactive mode, you can use simplified commands:
 
 ### Examples
 
-\`\`\`bash
+``` bash
 # Quick container overview
 docker-cli containers list
 
@@ -117,7 +117,7 @@ docker-cli interactive
 > containers
 > stats
 > exit
-\`\`\`
+```
 
 ## Features in Detail
 
@@ -144,25 +144,25 @@ docker-cli interactive
 
 ### Project Structure
 
-\`\`\`
+```
 src/
 ├── main.rs          # Main application entry point
 ├── docker.rs        # Docker client implementation
 ├── ui.rs           # User interface and display logic
 └── utils.rs        # Utility functions and validation
-\`\`\`
+```
 
 ### Running Tests
 
-\`\`\`bash
+``` bash
 cargo test
-\`\`\`
+```
 
 ### Development Mode
 
-\`\`\`bash
+``` bash
 cargo run -- containers list
-\`\`\`
+```
 
 ### Contributing
 
