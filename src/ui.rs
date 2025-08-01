@@ -1,6 +1,6 @@
 use colored::*;
 use std::io::{self, Write};
-use crate::docker::{Container, Image, ContainerStats, Network, Volume};
+use crate::docker::{Container, Image, ContainerStats, Network, Volume, ContainerProcess};
 
 pub struct UserInterface;
 
@@ -63,6 +63,17 @@ impl UserInterface {
         println!("  {} {} {}", "inspect".green().bold(), "<name>".dimmed(), "Inspect container details".white());
         println!("  {} {} {}", "info".green().bold(), "<name>".dimmed(), "Get detailed container information".white());
         println!("  {} {} {}", "size".green().bold(), "<name>".dimmed(), "Get container size information".white());
+        println!("  {} {} {}", "attach".green().bold(), "<name>".dimmed(), "Attach to a running container".white());
+        println!("  {} {} {}", "commit".green().bold(), "<name> <repo> [tag]".dimmed(), "Create image from container changes".white());
+        println!("  {} {} {}", "cp".green().bold(), "<name> <src> <dest>".dimmed(), "Copy files between container and host".white());
+        println!("  {} {} {}", "diff".green().bold(), "<name>".dimmed(), "Show container filesystem changes".white());
+        println!("  {} {} {}", "export".green().bold(), "<name> <file>".dimmed(), "Export container filesystem".white());
+        println!("  {} {} {}", "kill".green().bold(), "<name> [signal]".dimmed(), "Kill a running container".white());
+        println!("  {} {} {}", "port".green().bold(), "<name>".dimmed(), "List port mappings".white());
+        println!("  {} {} {}", "rename".green().bold(), "<old> <new>".dimmed(), "Rename a container".white());
+        println!("  {} {} {}", "top".green().bold(), "<name>".dimmed(), "Show container processes".white());
+        println!("  {} {} {}", "update".green().bold(), "<name> [options]".dimmed(), "Update container configuration".white());
+        println!("  {} {} {}", "wait".green().bold(), "<name>".dimmed(), "Wait for container to stop".white());
         println!();
         
         // Image Management Section
@@ -74,6 +85,10 @@ impl UserInterface {
         println!("  {} {} {}", "tag".green().bold(), "<source> <target>".dimmed(), "Tag an image".white());
         println!("  {} {} {}", "push".green().bold(), "<name>".dimmed(), "Push an image to registry".white());
         println!("  {} {} {}", "remove".green().bold(), "<name>".dimmed(), "Remove an image (will prompt for confirmation)".white());
+        println!("  {} {} {}", "history".green().bold(), "<name>".dimmed(), "Show image history".white());
+        println!("  {} {} {}", "import".green().bold(), "<file> <repo> [tag]".dimmed(), "Import image from tarball".white());
+        println!("  {} {} {}", "load".green().bold(), "<file>".dimmed(), "Load image from tar archive".white());
+        println!("  {} {} {}", "save".green().bold(), "<name> <file>".dimmed(), "Save image to tar archive".white());
         println!();
         
         // Network Management Section
@@ -126,8 +141,15 @@ impl UserInterface {
         println!("  {} {}", "dui containers exec my-postgres ls".cyan(), "→ Execute command in container".dimmed());
         println!("  {} {}", "dui containers info my-postgres".cyan(), "→ Get detailed container information".dimmed());
         println!("  {} {}", "dui containers size my-postgres".cyan(), "→ Get container size".dimmed());
+        println!("  {} {}", "dui containers top my-postgres".cyan(), "→ Show container processes".dimmed());
+        println!("  {} {}", "dui containers commit my-postgres my-repo:latest".cyan(), "→ Commit container changes".dimmed());
+        println!("  {} {}", "dui containers cp my-postgres /data /backup".cyan(), "→ Copy files from container".dimmed());
+        println!("  {} {}", "dui containers export my-postgres backup.tar".cyan(), "→ Export container filesystem".dimmed());
         println!("  {} {}", "dui images pull nginx:latest".cyan(), "→ Pull the latest nginx image".dimmed());
         println!("  {} {}", "dui images build . myapp:latest".cyan(), "→ Build image from current directory".dimmed());
+        println!("  {} {}", "dui images history nginx:latest".cyan(), "→ Show image history".dimmed());
+        println!("  {} {}", "dui images save nginx:latest nginx.tar".cyan(), "→ Save image to file".dimmed());
+        println!("  {} {}", "dui images load nginx.tar".cyan(), "→ Load image from file".dimmed());
         println!("  {} {}", "dui networks".cyan(), "→ List all networks".dimmed());
         println!("  {} {}", "dui volumes".cyan(), "→ List all volumes".dimmed());
         println!("  {} {}", "dui monitor dashboard".cyan(), "→ Show real-time dashboard".dimmed());
@@ -177,6 +199,17 @@ impl UserInterface {
         println!("  {} - Show container logs", "logs <name>".cyan());
         println!("  {} - Execute command in container", "exec <name> <cmd>".cyan());
         println!("  {} - Inspect container details", "inspect <name>".cyan());
+        println!("  {} - Show container processes", "top <name>".cyan());
+        println!("  {} - Attach to container", "attach <name>".cyan());
+        println!("  {} - Commit container changes", "commit <name> <repo>".cyan());
+        println!("  {} - Copy files from container", "cp <name> <src> <dest>".cyan());
+        println!("  {} - Show container diff", "diff <name>".cyan());
+        println!("  {} - Export container", "export <name> <file>".cyan());
+        println!("  {} - Kill container", "kill <name>".cyan());
+        println!("  {} - Show port mappings", "port <name>".cyan());
+        println!("  {} - Rename container", "rename <old> <new>".cyan());
+        println!("  {} - Update container", "update <name>".cyan());
+        println!("  {} - Wait for container", "wait <name>".cyan());
         println!();
         
         println!("{}", "🖼️  Image Commands:".green().bold());
@@ -186,6 +219,10 @@ impl UserInterface {
         println!("  {} - Tag an image", "tag <source> <target>".cyan());
         println!("  {} - Push an image", "push <name>".cyan());
         println!("  {} - Remove an image", "remove <name>".cyan());
+        println!("  {} - Show image history", "history <name>".cyan());
+        println!("  {} - Import image", "import <file> <repo>".cyan());
+        println!("  {} - Load image", "load <file>".cyan());
+        println!("  {} - Save image", "save <name> <file>".cyan());
         println!();
         
         println!("{}", "🌐 Network Commands:".green().bold());
@@ -337,6 +374,54 @@ impl UserInterface {
         println!();
     }
 
+    pub fn display_container_processes(&self, processes: &[ContainerProcess]) {
+        if processes.is_empty() {
+            self.show_info("No processes found.");
+            return;
+        }
+
+        println!();
+        println!("{}", "📊 Container Processes".cyan().bold());
+        println!("{}", "─".repeat(120).dimmed());
+        
+        // Header
+        println!(
+            "{:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<20}",
+            "USER".bold(),
+            "PID".bold(),
+            "PPID".bold(),
+            "CPU%".bold(),
+            "MEM%".bold(),
+            "VSZ".bold(),
+            "RSS".bold(),
+            "TTY".bold(),
+            "STAT".bold(),
+            "START".bold(),
+            "TIME".bold(),
+            "COMMAND".bold()
+        );
+        println!("{}", "─".repeat(120).dimmed());
+
+        for process in processes {
+            println!(
+                "{:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<8} {:<20}",
+                process.user.white(),
+                process.pid.cyan(),
+                process.ppid.dimmed(),
+                process.cpu.yellow(),
+                process.mem.yellow(),
+                process.vsz.dimmed(),
+                process.rss.dimmed(),
+                process.tty.dimmed(),
+                process.stat.green(),
+                process.start.dimmed(),
+                process.time.dimmed(),
+                process.command.white()
+            );
+        }
+        println!();
+    }
+
     pub fn display_stats(&self, stats: &[ContainerStats]) {
         if stats.is_empty() {
             self.show_info("No running containers to show stats for.");
@@ -469,6 +554,17 @@ impl UserInterface {
         println!("  {} - Execute command", "exec <number> <cmd>".cyan());
         println!("  {} - Inspect container", "inspect <number>".cyan());
         println!("  {} - Get container info", "info <number>".cyan());
+        println!("  {} - Show processes", "top <number>".cyan());
+        println!("  {} - Attach to container", "attach <number>".cyan());
+        println!("  {} - Commit container", "commit <number> <repo>".cyan());
+        println!("  {} - Copy files", "cp <number> <src> <dest>".cyan());
+        println!("  {} - Show diff", "diff <number>".cyan());
+        println!("  {} - Export container", "export <number> <file>".cyan());
+        println!("  {} - Kill container", "kill <number>".cyan());
+        println!("  {} - Show ports", "port <number>".cyan());
+        println!("  {} - Rename container", "rename <number> <new>".cyan());
+        println!("  {} - Update container", "update <number>".cyan());
+        println!("  {} - Wait for container", "wait <number>".cyan());
         println!("  {} - Back to main menu", "back".cyan());
         println!();
     }
@@ -512,6 +608,8 @@ impl UserInterface {
         println!("  {} - Remove image", "remove <number>".cyan());
         println!("  {} - Tag image", "tag <number> <new-tag>".cyan());
         println!("  {} - Push image", "push <number>".cyan());
+        println!("  {} - Show history", "history <number>".cyan());
+        println!("  {} - Save image", "save <number> <file>".cyan());
         println!("  {} - Back to main menu", "back".cyan());
         println!();
     }

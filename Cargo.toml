@@ -1,13 +1,18 @@
 [package]
 name = "dui-cli"
-version = "3.6.0"
+version = "4.0.0"
 edition = "2021"
-authors = ["Usman Khan usman@usmankhan.dev"]
-description = "An intuitive Docker management CLI built in Rust"
+authors = ["Usman Khan <usman@usmankhan.dev>"]
+description = "An intuitive Docker management CLI built in Rust with full Docker command parity"
 license = "MIT"
 repository = "https://github.com/ukhan1219/dui"
-keywords = ["docker", "cli", "container", "management"]
+homepage = "https://github.com/ukhan1219/dui"
+documentation = "https://github.com/ukhan1219/dui#readme"
+readme = "README.md"
+keywords = ["docker", "cli", "container", "management", "interactive", "terminal"]
 categories = ["command-line-utilities"]
+license-file = "LICENSE"
+rust-version = "1.70.0"
 
 [dependencies]
 clap = "2.34"

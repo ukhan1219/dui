@@ -16,7 +16,7 @@ use charts::ChartRenderer;
 fn main() {
     let matches = App::new("DUI")
         .version(env!("CARGO_PKG_VERSION"))
-        .author("Your Name")
+        .author("Usman Khan <usman@usmankhan.dev>")
         .about("An intuitive Docker management CLI with GUI-like features")
         .subcommand(
             SubCommand::with_name("containers")
@@ -25,7 +25,12 @@ fn main() {
                     Arg::with_name("action")
                         .help("Action to perform")
                         .required(true)
-                        .possible_values(&["list", "start", "stop", "restart", "pause", "unpause", "remove", "logs", "exec", "inspect", "create", "size", "info"])
+                        .possible_values(&[
+                            "list", "start", "stop", "restart", "pause", "unpause", "remove", 
+                            "logs", "exec", "inspect", "create", "size", "info", "attach", 
+                            "commit", "cp", "diff", "export", "kill", "port", "rename", 
+                            "top", "update", "wait"
+                        ])
                         .index(1),
                 )
                 .arg(
@@ -63,6 +68,72 @@ fn main() {
                     .help("Environment variables (for create action)")
                     .takes_value(true)
                     .index(7),
+                )
+                .arg(
+                    Arg::with_name("repository")
+                    .help("Repository name (for commit action)")
+                    .takes_value(true)
+                    .index(8),
+                )
+                .arg(
+                    Arg::with_name("tag")
+                    .help("Tag name (for commit action)")
+                    .takes_value(true)
+                    .index(9),
+                )
+                .arg(
+                    Arg::with_name("src_path")
+                    .help("Source path (for cp action)")
+                    .takes_value(true)
+                    .index(10),
+                )
+                .arg(
+                    Arg::with_name("dest_path")
+                    .help("Destination path (for cp action)")
+                    .takes_value(true)
+                    .index(11),
+                )
+                .arg(
+                    Arg::with_name("output_file")
+                    .help("Output file (for export action)")
+                    .takes_value(true)
+                    .index(12),
+                )
+                .arg(
+                    Arg::with_name("signal")
+                    .help("Signal (for kill action)")
+                    .takes_value(true)
+                    .index(13),
+                )
+                .arg(
+                    Arg::with_name("new_name")
+                    .help("New name (for rename action)")
+                    .takes_value(true)
+                    .index(14),
+                )
+                .arg(
+                    Arg::with_name("cpu_period")
+                    .help("CPU period (for update action)")
+                    .takes_value(true)
+                    .index(15),
+                )
+                .arg(
+                    Arg::with_name("cpu_quota")
+                    .help("CPU quota (for update action)")
+                    .takes_value(true)
+                    .index(16),
+                )
+                .arg(
+                    Arg::with_name("memory")
+                    .help("Memory limit (for update action)")
+                    .takes_value(true)
+                    .index(17),
+                )
+                .arg(
+                    Arg::with_name("memory_swap")
+                    .help("Memory swap limit (for update action)")
+                    .takes_value(true)
+                    .index(18),
                 ),
         )
         .subcommand(
@@ -72,7 +143,7 @@ fn main() {
                     Arg::with_name("action")
                         .help("Action to perform")
                         .required(true)
-                        .possible_values(&["list", "pull", "build", "tag", "push", "remove"])
+                        .possible_values(&["list", "pull", "build", "tag", "push", "remove", "history", "import", "load", "save"])
                         .index(1),
                 )
                 .arg(
@@ -86,6 +157,18 @@ fn main() {
                         .help("Target name or tag")
                         .takes_value(true)
                         .index(3),
+                )
+                .arg(
+                    Arg::with_name("file")
+                    .help("File path (for import/load/save actions)")
+                    .takes_value(true)
+                    .index(4),
+                )
+                .arg(
+                    Arg::with_name("repository")
+                    .help("Repository name (for import action)")
+                    .takes_value(true)
+                    .index(5),
                 ),
         )
         .subcommand(
@@ -170,6 +253,17 @@ fn handle_container_command(docker: &DockerClient, ui: &UserInterface, matches: 
     let ports = matches.value_of("ports");
     let volumes = matches.value_of("volumes");
     let env = matches.value_of("env");
+    let repository = matches.value_of("repository");
+    let tag = matches.value_of("tag");
+    let src_path = matches.value_of("src_path");
+    let dest_path = matches.value_of("dest_path");
+    let output_file = matches.value_of("output_file");
+    let signal = matches.value_of("signal");
+    let new_name = matches.value_of("new_name");
+    let cpu_period = matches.value_of("cpu_period");
+    let cpu_quota = matches.value_of("cpu_quota");
+    let memory = matches.value_of("memory");
+    let memory_swap = matches.value_of("memory_swap");
 
     match action {
         "list" => {
@@ -188,6 +282,131 @@ fn handle_container_command(docker: &DockerClient, ui: &UserInterface, matches: 
                 }
             } else {
                 ui.show_error("Container name and image are required for create action");
+            }
+        }
+        "attach" => {
+            if let Some(container_name) = name {
+                ui.show_loading(&format!("Attaching to container '{}'...", container_name));
+                match docker.attach_container(container_name) {
+                    Ok(_) => ui.show_success(&format!("Attached to container '{}'", container_name)),
+                    Err(e) => ui.show_error(&format!("Failed to attach to container: {}", e)),
+                }
+            } else {
+                ui.show_error("Container name is required for attach action");
+            }
+        }
+        "commit" => {
+            if let (Some(container_name), Some(repo_name)) = (name, repository) {
+                ui.show_loading(&format!("Committing container '{}' to '{}'...", container_name, repo_name));
+                match docker.commit_container(container_name, repo_name, tag) {
+                    Ok(_) => ui.show_success(&format!("Container '{}' committed successfully", container_name)),
+                    Err(e) => ui.show_error(&format!("Failed to commit container: {}", e)),
+                }
+            } else {
+                ui.show_error("Container name and repository are required for commit action");
+            }
+        }
+        "cp" => {
+            if let (Some(container_name), Some(src), Some(dest)) = (name, src_path, dest_path) {
+                ui.show_loading(&format!("Copying from container '{}'...", container_name));
+                match docker.copy_from_container(container_name, src, dest) {
+                    Ok(_) => ui.show_success(&format!("Copied from container '{}' successfully", container_name)),
+                    Err(e) => ui.show_error(&format!("Failed to copy from container: {}", e)),
+                }
+            } else {
+                ui.show_error("Container name, source path, and destination path are required for cp action");
+            }
+        }
+        "diff" => {
+            if let Some(container_name) = name {
+                ui.show_loading(&format!("Getting diff for container '{}'...", container_name));
+                match docker.diff_container(container_name) {
+                    Ok(diff) => {
+                        println!("{}", diff);
+                    },
+                    Err(e) => ui.show_error(&format!("Failed to get container diff: {}", e)),
+                }
+            } else {
+                ui.show_error("Container name is required for diff action");
+            }
+        }
+        "export" => {
+            if let (Some(container_name), Some(output)) = (name, output_file) {
+                ui.show_loading(&format!("Exporting container '{}' to '{}'...", container_name, output));
+                match docker.export_container(container_name, output) {
+                    Ok(_) => ui.show_success(&format!("Container '{}' exported successfully", container_name)),
+                    Err(e) => ui.show_error(&format!("Failed to export container: {}", e)),
+                }
+            } else {
+                ui.show_error("Container name and output file are required for export action");
+            }
+        }
+        "kill" => {
+            if let Some(container_name) = name {
+                ui.show_loading(&format!("Killing container '{}'...", container_name));
+                match docker.kill_container(container_name, signal) {
+                    Ok(_) => ui.show_success(&format!("Container '{}' killed successfully", container_name)),
+                    Err(e) => ui.show_error(&format!("Failed to kill container: {}", e)),
+                }
+            } else {
+                ui.show_error("Container name is required for kill action");
+            }
+        }
+        "port" => {
+            if let Some(container_name) = name {
+                ui.show_loading(&format!("Getting port mappings for container '{}'...", container_name));
+                match docker.get_container_ports(container_name) {
+                    Ok(ports) => {
+                        println!("{}", ports);
+                    },
+                    Err(e) => ui.show_error(&format!("Failed to get container ports: {}", e)),
+                }
+            } else {
+                ui.show_error("Container name is required for port action");
+            }
+        }
+        "rename" => {
+            if let (Some(old_name), Some(new_name_val)) = (name, new_name) {
+                ui.show_loading(&format!("Renaming container '{}' to '{}'...", old_name, new_name_val));
+                match docker.rename_container(old_name, new_name_val) {
+                    Ok(_) => ui.show_success(&format!("Container renamed successfully from '{}' to '{}'", old_name, new_name_val)),
+                    Err(e) => ui.show_error(&format!("Failed to rename container: {}", e)),
+                }
+            } else {
+                ui.show_error("Container name and new name are required for rename action");
+            }
+        }
+        "top" => {
+            if let Some(container_name) = name {
+                ui.show_loading(&format!("Getting processes for container '{}'...", container_name));
+                match docker.get_container_processes(container_name) {
+                    Ok(processes) => ui.display_container_processes(&processes),
+                    Err(e) => ui.show_error(&format!("Failed to get container processes: {}", e)),
+                }
+            } else {
+                ui.show_error("Container name is required for top action");
+            }
+        }
+        "update" => {
+            if let Some(container_name) = name {
+                ui.show_loading(&format!("Updating container '{}'...", container_name));
+                match docker.update_container(container_name, cpu_period, cpu_quota, memory, memory_swap) {
+                    Ok(_) => ui.show_success(&format!("Container '{}' updated successfully", container_name)),
+                    Err(e) => ui.show_error(&format!("Failed to update container: {}", e)),
+                }
+            } else {
+                ui.show_error("Container name is required for update action");
+            }
+        }
+        "wait" => {
+            if let Some(container_name) = name {
+                ui.show_loading(&format!("Waiting for container '{}'...", container_name));
+                match docker.wait_for_container(container_name) {
+                    Ok(exit_code) => ui.show_success(&format!("Container '{}' exited with code: {}", container_name, exit_code)),
+                    Err(e) => ui.show_error(&format!("Failed to wait for container: {}", e)),
+                }
+            } else {
+                ui.show_error("Container name is required for wait action");
             }
         }
         "size" => {
@@ -331,6 +550,8 @@ fn handle_image_command(docker: &DockerClient, ui: &UserInterface, matches: &cla
     let action = matches.value_of("action").unwrap();
     let name = matches.value_of("name");
     let target = matches.value_of("target");
+    let file = matches.value_of("file");
+    let repository = matches.value_of("repository");
 
     match action {
         "list" => {
@@ -403,6 +624,52 @@ fn handle_image_command(docker: &DockerClient, ui: &UserInterface, matches: &cla
                 }
             } else {
                 ui.show_error("Image name is required for remove action");
+            }
+        }
+        "history" => {
+            if let Some(image_name) = name {
+                ui.show_loading(&format!("Getting history for image '{}'...", image_name));
+                match docker.get_container_history(image_name) {
+                    Ok(history) => {
+                        println!("{}", history);
+                    },
+                    Err(e) => ui.show_error(&format!("Failed to get image history: {}", e)),
+                }
+            } else {
+                ui.show_error("Image name is required for history action");
+            }
+        }
+        "import" => {
+            if let (Some(file_path), Some(repo_name)) = (file, repository) {
+                ui.show_loading(&format!("Importing '{}' as '{}'...", file_path, repo_name));
+                match docker.import_image(file_path, repo_name, target) {
+                    Ok(_) => ui.show_success(&format!("Image imported successfully as '{}'", repo_name)),
+                    Err(e) => ui.show_error(&format!("Failed to import image: {}", e)),
+                }
+            } else {
+                ui.show_error("File path and repository name are required for import action");
+            }
+        }
+        "load" => {
+            if let Some(file_path) = file {
+                ui.show_loading(&format!("Loading image from '{}'...", file_path));
+                match docker.load_image(file_path) {
+                    Ok(_) => ui.show_success(&format!("Image loaded successfully from '{}'", file_path)),
+                    Err(e) => ui.show_error(&format!("Failed to load image: {}", e)),
+                }
+            } else {
+                ui.show_error("File path is required for load action");
+            }
+        }
+        "save" => {
+            if let (Some(image_name), Some(output_file)) = (name, file) {
+                ui.show_loading(&format!("Saving image '{}' to '{}'...", image_name, output_file));
+                match docker.save_image(image_name, output_file) {
+                    Ok(_) => ui.show_success(&format!("Image '{}' saved successfully to '{}'", image_name, output_file)),
+                    Err(e) => ui.show_error(&format!("Failed to save image: {}", e)),
+                }
+            } else {
+                ui.show_error("Image name and output file are required for save action");
             }
         }
         _ => ui.show_error("Unknown image action"),
@@ -832,6 +1099,182 @@ fn handle_interactive_container_menu(docker: &DockerClient, ui: &UserInterface, 
                     ui.show_error("Invalid number format");
                 }
             }
+            ["top", num] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= containers.len() {
+                        let container = &containers[index - 1];
+                        ui.show_loading(&format!("Getting processes for container '{}'...", container.name));
+                        match docker.get_container_processes(&container.name) {
+                            Ok(processes) => ui.display_container_processes(&processes),
+                            Err(e) => ui.show_error(&format!("Failed to get container processes: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid container number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
+            ["attach", num] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= containers.len() {
+                        let container = &containers[index - 1];
+                        ui.show_loading(&format!("Attaching to container '{}'...", container.name));
+                        match docker.attach_container(&container.name) {
+                            Ok(_) => ui.show_success(&format!("Attached to container '{}'", container.name)),
+                            Err(e) => ui.show_error(&format!("Failed to attach to container: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid container number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
+            ["commit", num, repo] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= containers.len() {
+                        let container = &containers[index - 1];
+                        ui.show_loading(&format!("Committing container '{}' to '{}'...", container.name, repo));
+                        match docker.commit_container(&container.name, repo, None) {
+                            Ok(_) => ui.show_success(&format!("Container '{}' committed successfully", container.name)),
+                            Err(e) => ui.show_error(&format!("Failed to commit container: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid container number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
+            ["cp", num, src, dest] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= containers.len() {
+                        let container = &containers[index - 1];
+                        ui.show_loading(&format!("Copying from container '{}'...", container.name));
+                        match docker.copy_from_container(&container.name, src, dest) {
+                            Ok(_) => ui.show_success(&format!("Copied from container '{}' successfully", container.name)),
+                            Err(e) => ui.show_error(&format!("Failed to copy from container: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid container number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
+            ["diff", num] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= containers.len() {
+                        let container = &containers[index - 1];
+                        ui.show_loading(&format!("Getting diff for container '{}'...", container.name));
+                        match docker.diff_container(&container.name) {
+                            Ok(diff) => println!("{}", diff),
+                            Err(e) => ui.show_error(&format!("Failed to get container diff: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid container number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
+            ["export", num, file] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= containers.len() {
+                        let container = &containers[index - 1];
+                        ui.show_loading(&format!("Exporting container '{}' to '{}'...", container.name, file));
+                        match docker.export_container(&container.name, file) {
+                            Ok(_) => ui.show_success(&format!("Container '{}' exported successfully", container.name)),
+                            Err(e) => ui.show_error(&format!("Failed to export container: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid container number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
+            ["kill", num] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= containers.len() {
+                        let container = &containers[index - 1];
+                        ui.show_loading(&format!("Killing container '{}'...", container.name));
+                        match docker.kill_container(&container.name, None) {
+                            Ok(_) => ui.show_success(&format!("Container '{}' killed successfully", container.name)),
+                            Err(e) => ui.show_error(&format!("Failed to kill container: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid container number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
+            ["port", num] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= containers.len() {
+                        let container = &containers[index - 1];
+                        ui.show_loading(&format!("Getting port mappings for container '{}'...", container.name));
+                        match docker.get_container_ports(&container.name) {
+                            Ok(ports) => println!("{}", ports),
+                            Err(e) => ui.show_error(&format!("Failed to get container ports: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid container number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
+            ["rename", num, new_name] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= containers.len() {
+                        let container = &containers[index - 1];
+                        ui.show_loading(&format!("Renaming container '{}' to '{}'...", container.name, new_name));
+                        match docker.rename_container(&container.name, new_name) {
+                            Ok(_) => ui.show_success(&format!("Container renamed successfully from '{}' to '{}'", container.name, new_name)),
+                            Err(e) => ui.show_error(&format!("Failed to rename container: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid container number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
+            ["update", num] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= containers.len() {
+                        let container = &containers[index - 1];
+                        ui.show_loading(&format!("Updating container '{}'...", container.name));
+                        match docker.update_container(&container.name, None, None, None, None) {
+                            Ok(_) => ui.show_success(&format!("Container '{}' updated successfully", container.name)),
+                            Err(e) => ui.show_error(&format!("Failed to update container: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid container number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
+            ["wait", num] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= containers.len() {
+                        let container = &containers[index - 1];
+                        ui.show_loading(&format!("Waiting for container '{}'...", container.name));
+                        match docker.wait_for_container(&container.name) {
+                            Ok(exit_code) => ui.show_success(&format!("Container '{}' exited with code: {}", container.name, exit_code)),
+                            Err(e) => ui.show_error(&format!("Failed to wait for container: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid container number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
             _ => {
                 ui.show_error("Invalid action. Use 'back' to return to main menu.");
             }
@@ -906,10 +1349,45 @@ fn handle_interactive_image_menu(docker: &DockerClient, ui: &UserInterface, imag
                     ui.show_error("Invalid number format");
                 }
             }
+            ["history", num] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= images.len() {
+                        let image = &images[index - 1];
+                        let image_name = format!("{}:{}", image.repository, image.tag);
+                        ui.show_loading(&format!("Getting history for image '{}'...", image_name));
+                        match docker.get_container_history(&image_name) {
+                            Ok(history) => println!("{}", history),
+                            Err(e) => ui.show_error(&format!("Failed to get image history: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid image number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
+            ["save", num, file] => {
+                if let Ok(index) = num.parse::<usize>() {
+                    if index > 0 && index <= images.len() {
+                        let image = &images[index - 1];
+                        let image_name = format!("{}:{}", image.repository, image.tag);
+                        ui.show_loading(&format!("Saving image '{}' to '{}'...", image_name, file));
+                        match docker.save_image(&image_name, file) {
+                            Ok(_) => ui.show_success(&format!("Image '{}' saved successfully to '{}'", image_name, file)),
+                            Err(e) => ui.show_error(&format!("Failed to save image: {}", e)),
+                        }
+                    } else {
+                        ui.show_error("Invalid image number");
+                    }
+                } else {
+                    ui.show_error("Invalid number format");
+                }
+            }
             _ => {
                 ui.show_error("Invalid action. Use 'back' to return to main menu.");
             }
         }
     }
 }
+
 
