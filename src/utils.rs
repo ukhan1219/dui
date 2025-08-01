@@ -1,9 +1,4 @@
-use serde_json::Value;
-
-pub fn parse_docker_output(output: &str) -> Result<Value, String> {
-    serde_json::from_str(output)
-        .map_err(|e| format!("Failed to parse Docker output: {}", e))
-}
+// Utility functions for Docker CLI operations
 
 pub fn format_size(bytes: u64) -> String {
     const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB"];

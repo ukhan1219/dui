@@ -1,11 +1,11 @@
 [package]
-name = "docker-gui-cli"
-version = "1.0.0"
+name = "dui-cli"
+version = "3.1.0"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
-description = "An intuitive Docker management CLI with GUI-like features"
+authors = ["Usman Khan usman@usmankhan.dev"]
+description = "An intuitive Docker management CLI built in Rust"
 license = "MIT"
-repository = "https://github.com/yourusername/docker-gui-cli"
+repository = "https://github.com/ukhan1219/dui"
 keywords = ["docker", "cli", "container", "management"]
 categories = ["command-line-utilities"]
 
@@ -15,6 +15,11 @@ colored = "2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.0", features = ["full"], optional = true }
+rustyline = "12.0"
+crossterm = "0.26"
+tui = "0.19"
+termion = "2.0"
+unicode-segmentation = "1.10"
 
 [dev-dependencies]
 assert_cmd = "2.0"
@@ -25,7 +30,7 @@ default = []
 async = ["tokio"]
 
 [[bin]]
-name = "docker-cli"
+name = "dui"
 path = "src/main.rs"
 
 [profile.release]

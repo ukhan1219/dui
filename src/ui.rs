@@ -1,6 +1,6 @@
 use colored::*;
 use std::io::{self, Write};
-use crate::docker::{Container, Image, ContainerStats};
+use crate::docker::{Container, Image, ContainerStats, Network, Volume};
 
 pub struct UserInterface;
 
@@ -9,45 +9,229 @@ impl UserInterface {
         UserInterface
     }
 
-    pub fn show_welcome(&self) {
-        println!("{}", "╔══════════════════════════════════════════════════════════════╗".cyan());
-        println!("{}", "║                    Docker GUI CLI v1.0.0                    ║".cyan());
-        println!("{}", "║              Intuitive Docker Management Tool               ║".cyan());
-        println!("{}", "╚══════════════════════════════════════════════════════════════╝".cyan());
-        println!();
-    }
-
     pub fn show_help(&self) {
-        println!("{}", "Available Commands:".yellow().bold());
+        // Rainbow colors for ASCII art
+        let colors = [
+            "magenta"
+        ];
+        
+        // ASCII art lines
+        let ascii_lines = [
+            "",
+            "",
+            "",
+            "░███████   ░██     ░██ ░██████",
+            "░██   ░██  ░██     ░██   ░██  ",
+            "░██    ░██ ░██     ░██   ░██  ",
+            "░██    ░██ ░██     ░██   ░██  ",
+            "░██    ░██ ░██     ░██   ░██  ",
+            "░██   ░██   ░██   ░██    ░██  ",
+            "░███████     ░██████   ░██████",
+            "",
+            "",
+            ""
+        ];
+        
+        // Print ASCII art with rainbow colors
+        for (i, line) in ascii_lines.iter().enumerate() {
+            let color = colors[i % colors.len()];
+            match color {
+                
+                "magenta" => println!("{}", line.magenta().bold()),
+                _ => println!("{}", line.white().bold()),
+            }
+        }
+        
         println!();
-        println!("  {} {}", "containers".green().bold(), "list|start|stop|remove|logs [name]".dimmed());
-        println!("    Manage Docker containers");
+        
+        println!("{}", "📋 Available Commands:".yellow().bold());
         println!();
-        println!("  {} {}", "images".green().bold(), "list|pull|remove [name]".dimmed());
-        println!("    Manage Docker images");
+        
+        // Container Management Section
+        println!("{}", "🐳 CONTAINER MANAGEMENT".green().bold());
+        println!("{}", "─".repeat(50).dimmed());
+        println!("  {} {} {}", "list".green().bold(), "".dimmed(), "List all containers (running and stopped)".white());
+        println!("  {} {} {}", "create".green().bold(), "<name> <image>".dimmed(), "Create a new container".white());
+        println!("  {} {} {}", "start".green().bold(), "<name>".dimmed(), "Start a stopped container".white());
+        println!("  {} {} {}", "stop".green().bold(), "<name>".dimmed(), "Stop a running container".white());
+        println!("  {} {} {}", "restart".green().bold(), "<name>".dimmed(), "Restart a container".white());
+        println!("  {} {} {}", "pause".green().bold(), "<name>".dimmed(), "Pause a running container".white());
+        println!("  {} {} {}", "unpause".green().bold(), "<name>".dimmed(), "Unpause a paused container".white());
+        println!("  {} {} {}", "remove".green().bold(), "<name>".dimmed(), "Remove a container (will prompt for confirmation)".white());
+        println!("  {} {} {}", "logs".green().bold(), "<name>".dimmed(), "Show container logs (last 50 lines)".white());
+        println!("  {} {} {}", "exec".green().bold(), "<name> <cmd>".dimmed(), "Execute command in container".white());
+        println!("  {} {} {}", "inspect".green().bold(), "<name>".dimmed(), "Inspect container details".white());
+        println!("  {} {} {}", "info".green().bold(), "<name>".dimmed(), "Get detailed container information".white());
+        println!("  {} {} {}", "size".green().bold(), "<name>".dimmed(), "Get container size information".white());
         println!();
-        println!("  {} {}", "monitor".green().bold(), "stats|system|events".dimmed());
-        println!("    Monitor Docker resources");
+        
+        // Image Management Section
+        println!("{}", "🖼️  IMAGE MANAGEMENT".green().bold());
+        println!("{}", "─".repeat(50).dimmed());
+        println!("  {} {} {}", "list".green().bold(), "".dimmed(), "List all Docker images".white());
+        println!("  {} {} {}", "pull".green().bold(), "<name>".dimmed(), "Pull an image from Docker Hub".white());
+        println!("  {} {} {}", "build".green().bold(), "<path> <tag>".dimmed(), "Build an image from Dockerfile".white());
+        println!("  {} {} {}", "tag".green().bold(), "<source> <target>".dimmed(), "Tag an image".white());
+        println!("  {} {} {}", "push".green().bold(), "<name>".dimmed(), "Push an image to registry".white());
+        println!("  {} {} {}", "remove".green().bold(), "<name>".dimmed(), "Remove an image (will prompt for confirmation)".white());
         println!();
-        println!("  {} {}", "interactive".green().bold(), "".dimmed());
-        println!("    Launch interactive mode");
+        
+        // Network Management Section
+        println!("{}", "🌐 NETWORK MANAGEMENT".green().bold());
+        println!("{}", "─".repeat(50).dimmed());
+        println!("  {} {} {}", "networks".green().bold(), "".dimmed(), "List all Docker networks".white());
         println!();
-        println!("{}", "Examples:".yellow().bold());
-        println!("  docker-cli containers list");
-        println!("  docker-cli containers start my-container");
-        println!("  docker-cli images pull nginx:latest");
-        println!("  docker-cli monitor stats");
-        println!("  docker-cli interactive");
+        
+        // Volume Management Section
+        println!("{}", "💾 VOLUME MANAGEMENT".green().bold());
+        println!("{}", "─".repeat(50).dimmed());
+        println!("  {} {} {}", "volumes".green().bold(), "".dimmed(), "List all Docker volumes".white());
+        println!();
+        
+        // Monitoring Section
+        println!("{}", "📊 MONITORING & SYSTEM".green().bold());
+        println!("{}", "─".repeat(50).dimmed());
+        println!("  {} {} {}", "stats".green().bold(), "".dimmed(), "Show real-time container statistics".white());
+        println!("  {} {} {}", "system".green().bold(), "".dimmed(), "Show Docker system information".white());
+        println!("  {} {} {}", "events".green().bold(), "".dimmed(), "Monitor Docker events in real-time".white());
+        println!("  {} {} {}", "dashboard".green().bold(), "".dimmed(), "Show real-time system dashboard".white());
+        println!("  {} {} {}", "charts".green().bold(), "".dimmed(), "Display all system charts".white());
+        println!();
+        
+        // Charts Section
+        println!("{}", "📈 CHARTS & VISUALIZATIONS".green().bold());
+        println!("{}", "─".repeat(50).dimmed());
+        println!("  {} {} {}", "cpu".green().bold(), "".dimmed(), "Show CPU usage chart".white());
+        println!("  {} {} {}", "memory".green().bold(), "".dimmed(), "Show memory usage chart".white());
+        println!("  {} {} {}", "network".green().bold(), "".dimmed(), "Show network traffic chart".white());
+        println!("  {} {} {}", "storage".green().bold(), "".dimmed(), "Show storage I/O chart".white());
+        println!("  {} {} {}", "status".green().bold(), "".dimmed(), "Show container status chart".white());
+        println!("  {} {} {}", "images".green().bold(), "".dimmed(), "Show image size distribution".white());
+        println!("  {} {} {}", "pie".green().bold(), "".dimmed(), "Show system resource pie chart (WIP)".white());
+        println!();
+        
+        // Interactive Mode Section
+        println!("{}", "🔄 INTERACTIVE MODE".green().bold());
+        println!("{}", "─".repeat(50).dimmed());
+        println!("  {} {} {}", "interactive".green().bold(), "".dimmed(), "Launch interactive mode for continuous operations".white());
+        println!();
+        
+        println!("{}", "📝 Examples:".yellow().bold());
+        println!("{}", "─".repeat(50).dimmed());
+        println!("  {} {}", "dui containers list".cyan(), "→ List all containers".dimmed());
+        println!("  {} {}", "dui containers create my-app nginx:latest".cyan(), "→ Create container from image".dimmed());
+        println!("  {} {}", "dui containers create my-db postgres:13 -p 5432:5432".cyan(), "→ Create container with port mapping".dimmed());
+        println!("  {} {}", "dui containers start my-postgres".cyan(), "→ Start a container named 'my-postgres'".dimmed());
+        println!("  {} {}", "dui containers restart my-postgres".cyan(), "→ Restart a container".dimmed());
+        println!("  {} {}", "dui containers exec my-postgres ls".cyan(), "→ Execute command in container".dimmed());
+        println!("  {} {}", "dui containers info my-postgres".cyan(), "→ Get detailed container information".dimmed());
+        println!("  {} {}", "dui containers size my-postgres".cyan(), "→ Get container size".dimmed());
+        println!("  {} {}", "dui images pull nginx:latest".cyan(), "→ Pull the latest nginx image".dimmed());
+        println!("  {} {}", "dui images build . myapp:latest".cyan(), "→ Build image from current directory".dimmed());
+        println!("  {} {}", "dui networks".cyan(), "→ List all networks".dimmed());
+        println!("  {} {}", "dui volumes".cyan(), "→ List all volumes".dimmed());
+        println!("  {} {}", "dui monitor dashboard".cyan(), "→ Show real-time dashboard".dimmed());
+        println!("  {} {}", "dui charts cpu".cyan(), "→ Show CPU usage chart".dimmed());
+        println!("  {} {}", "dui charts pie".cyan(), "→ Show system pie chart (WIP)".dimmed());
+        println!("  {} {}", "dui interactive".cyan(), "→ Launch interactive mode".dimmed());
+        println!();
+        
+        println!("{}", "💡 Interactive Mode Features:".yellow().bold());
+        println!("{}", "─".repeat(50).dimmed());
+        println!("{}", "  • Numbered menus for easy selection".dimmed());
+        println!("{}", "  • Tab completion for commands and names".dimmed());
+        println!("{}", "  • Real-time container and image management".dimmed());
+        println!("{}", "  • Advanced operations with confirmation prompts".dimmed());
+        println!("{}", "  • Beautiful charts and visualizations".dimmed());
+        println!("{}", "  • Real-time system monitoring dashboard".dimmed());
+        println!();
+        
+        println!("{}", "🔧 Tips:".yellow().bold());
+        println!("{}", "─".repeat(50).dimmed());
+        println!("{}", "  • Container names can be partial matches".dimmed());
+        println!("{}", "  • Use 'dui interactive' for continuous operations".dimmed());
+        println!("{}", "  • Interactive mode supports numbered menu selection".dimmed());
+        println!("{}", "  • The tool will prompt for confirmation before destructive operations".dimmed());
+        println!("{}", "  • All commands show colored output for better readability".dimmed());
+        println!();
+        
+        println!("{}", "❓ Need Help?".yellow().bold());
+        println!("{}", "  Run 'dui' without arguments to see this help message".dimmed());
+        println!("{}", "  Use 'dui interactive' then type 'help' for interactive mode help".dimmed());
         println!();
     }
 
     pub fn show_interactive_help(&self) {
-        println!("{}", "Interactive Mode Commands:".yellow().bold());
-        println!("  {} - List all containers", "containers".green());
-        println!("  {} - List all images", "images".green());
-        println!("  {} - Show container statistics", "stats".green());
-        println!("  {} - Show this help", "help".green());
-        println!("  {} - Exit interactive mode", "exit".green());
+        println!("{}", "🔄 Interactive Mode Commands:".yellow().bold());
+        println!("{}", "─".repeat(50).dimmed());
+        println!();
+        
+        println!("{}", "🐳 Container Commands:".green().bold());
+        println!("  {} - List all containers with interactive menu", "containers".cyan());
+        println!("  {} - Start a specific container", "start <name>".cyan());
+        println!("  {} - Stop a specific container", "stop <name>".cyan());
+        println!("  {} - Restart a specific container", "restart <name>".cyan());
+        println!("  {} - Pause a specific container", "pause <name>".cyan());
+        println!("  {} - Unpause a specific container", "unpause <name>".cyan());
+        println!("  {} - Remove a specific container", "remove <name>".cyan());
+        println!("  {} - Show container logs", "logs <name>".cyan());
+        println!("  {} - Execute command in container", "exec <name> <cmd>".cyan());
+        println!("  {} - Inspect container details", "inspect <name>".cyan());
+        println!();
+        
+        println!("{}", "🖼️  Image Commands:".green().bold());
+        println!("  {} - List all Docker images with interactive menu", "images".cyan());
+        println!("  {} - Pull an image", "pull <name>".cyan());
+        println!("  {} - Build an image", "build <path> <tag>".cyan());
+        println!("  {} - Tag an image", "tag <source> <target>".cyan());
+        println!("  {} - Push an image", "push <name>".cyan());
+        println!("  {} - Remove an image", "remove <name>".cyan());
+        println!();
+        
+        println!("{}", "🌐 Network Commands:".green().bold());
+        println!("  {} - List all networks", "networks".cyan());
+        println!();
+        
+        println!("{}", "💾 Volume Commands:".green().bold());
+        println!("  {} - List all volumes", "volumes".cyan());
+        println!();
+        
+        println!("{}", "📊 Monitoring Commands:".green().bold());
+        println!("  {} - Show real-time container statistics", "stats".cyan());
+        println!("  {} - Show Docker system information", "system".cyan());
+        println!("  {} - Monitor Docker events", "events".cyan());
+        println!("  {} - Show real-time system dashboard", "dashboard".cyan());
+        println!("  {} - Display all system charts", "charts".cyan());
+        println!();
+        
+        println!("{}", "📈 Chart Commands:".green().bold());
+        println!("  {} - Show CPU usage chart", "cpu-chart".cyan());
+        println!("  {} - Show memory usage chart", "memory-chart".cyan());
+        println!("  {} - Show system pie chart", "pie-chart".cyan());
+        println!();
+        
+        println!("{}", "🔧 Utility Commands:".green().bold());
+        println!("  {} - Show this help message", "help".cyan());
+        println!("  {} - Exit interactive mode", "exit".cyan());
+        println!("  {} - Exit interactive mode", "quit".cyan());
+        println!();
+        
+        println!("{}", "💡 Interactive Features:".yellow().bold());
+        println!("{}", "  • Numbered menus for easy selection".dimmed());
+        println!("{}", "  • Tab completion for commands and names".dimmed());
+        println!("{}", "  • Real-time feedback for all operations".dimmed());
+        println!("{}", "  • Confirmation prompts for destructive operations".dimmed());
+        println!("{}", "  • Beautiful ASCII charts and visualizations".dimmed());
+        println!("{}", "  • Real-time system monitoring dashboard".dimmed());
+        println!();
+        
+        println!("{}", "📝 Example Session:".yellow().bold());
+        println!("{}", "  dui> containers".dimmed());
+        println!("{}", "  dui> images".dimmed());
+        println!("{}", "  dui> networks".dimmed());
+        println!("{}", "  dui> dashboard".dimmed());
+        println!("{}", "  dui> charts".dimmed());
+        println!("{}", "  dui> exit".dimmed());
         println!();
     }
 
@@ -229,6 +413,167 @@ impl UserInterface {
                     println!("{}: {}", parts[0].trim().yellow(), parts[1].trim().white());
                 }
             }
+        }
+        println!();
+    }
+
+    pub fn display_containers_interactive(&self, containers: &[Container]) {
+        if containers.is_empty() {
+            self.show_info("No containers found.");
+            return;
+        }
+
+        println!();
+        println!("{}", "📦 Docker Containers (Interactive)".cyan().bold());
+        println!("{}", "─".repeat(80).dimmed());
+        
+        // Header
+        println!(
+            "{:<4} {:<12} {:<20} {:<25} {:<15} {:<20}",
+            "#".bold(),
+            "ID".bold(),
+            "NAME".bold(),
+            "IMAGE".bold(),
+            "STATUS".bold(),
+            "PORTS".bold()
+        );
+        println!("{}", "─".repeat(80).dimmed());
+
+        for (i, container) in containers.iter().enumerate() {
+            let status_color = if container.status.contains("Up") {
+                container.status.green()
+            } else {
+                container.status.red()
+            };
+
+            println!(
+                "{:<4} {:<12} {:<20} {:<25} {:<15} {:<20}",
+                (i + 1).to_string().yellow().bold(),
+                container.id[..12.min(container.id.len())].dimmed(),
+                container.name.white(),
+                container.image.cyan(),
+                status_color,
+                container.ports.dimmed()
+            );
+        }
+        
+        println!();
+        println!("{}", "🔧 Available Actions:".yellow().bold());
+        println!("  {} - Start container", "start <number>".cyan());
+        println!("  {} - Stop container", "stop <number>".cyan());
+        println!("  {} - Restart container", "restart <number>".cyan());
+        println!("  {} - Pause container", "pause <number>".cyan());
+        println!("  {} - Unpause container", "unpause <number>".cyan());
+        println!("  {} - Remove container", "remove <number>".cyan());
+        println!("  {} - Show logs", "logs <number>".cyan());
+        println!("  {} - Execute command", "exec <number> <cmd>".cyan());
+        println!("  {} - Inspect container", "inspect <number>".cyan());
+        println!("  {} - Get container info", "info <number>".cyan());
+        println!("  {} - Back to main menu", "back".cyan());
+        println!();
+    }
+
+    pub fn display_images_interactive(&self, images: &[Image]) {
+        if images.is_empty() {
+            self.show_info("No images found.");
+            return;
+        }
+
+        println!();
+        println!("{}", "🖼️  Docker Images (Interactive)".cyan().bold());
+        println!("{}", "─".repeat(80).dimmed());
+        
+        // Header
+        println!(
+            "{:<4} {:<12} {:<25} {:<10} {:<12} {:<20}",
+            "#".bold(),
+            "ID".bold(),
+            "REPOSITORY".bold(),
+            "TAG".bold(),
+            "SIZE".bold(),
+            "CREATED".bold()
+        );
+        println!("{}", "─".repeat(80).dimmed());
+
+        for (i, image) in images.iter().enumerate() {
+            println!(
+                "{:<4} {:<12} {:<25} {:<10} {:<12} {:<20}",
+                (i + 1).to_string().yellow().bold(),
+                image.id[..12.min(image.id.len())].dimmed(),
+                image.repository.white(),
+                image.tag.cyan(),
+                image.size.yellow(),
+                image.created.dimmed()
+            );
+        }
+        
+        println!();
+        println!("{}", "🔧 Available Actions:".yellow().bold());
+        println!("  {} - Remove image", "remove <number>".cyan());
+        println!("  {} - Tag image", "tag <number> <new-tag>".cyan());
+        println!("  {} - Push image", "push <number>".cyan());
+        println!("  {} - Back to main menu", "back".cyan());
+        println!();
+    }
+
+    pub fn display_networks(&self, networks: &[Network]) {
+        if networks.is_empty() {
+            self.show_info("No networks found.");
+            return;
+        }
+
+        println!();
+        println!("{}", "🌐 Docker Networks".cyan().bold());
+        println!("{}", "─".repeat(80).dimmed());
+        
+        // Header
+        println!(
+            "{:<12} {:<20} {:<15} {:<10}",
+            "ID".bold(),
+            "NAME".bold(),
+            "DRIVER".bold(),
+            "SCOPE".bold()
+        );
+        println!("{}", "─".repeat(80).dimmed());
+
+        for network in networks {
+            println!(
+                "{:<12} {:<20} {:<15} {:<10}",
+                network.id[..12.min(network.id.len())].dimmed(),
+                network.name.white(),
+                network.driver.cyan(),
+                network.scope.yellow()
+            );
+        }
+        println!();
+    }
+
+    pub fn display_volumes(&self, volumes: &[Volume]) {
+        if volumes.is_empty() {
+            self.show_info("No volumes found.");
+            return;
+        }
+
+        println!();
+        println!("{}", "💾 Docker Volumes".cyan().bold());
+        println!("{}", "─".repeat(80).dimmed());
+        
+        // Header
+        println!(
+            "{:<20} {:<15} {:<40}",
+            "NAME".bold(),
+            "DRIVER".bold(),
+            "MOUNTPOINT".bold()
+        );
+        println!("{}", "─".repeat(80).dimmed());
+
+        for volume in volumes {
+            println!(
+                "{:<20} {:<15} {:<40}",
+                volume.name.white(),
+                volume.driver.cyan(),
+                volume.mountpoint.dimmed()
+            );
         }
         println!();
     }
