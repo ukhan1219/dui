@@ -9,7 +9,7 @@ repository = "https://github.com/ukhan1219/dui"
 homepage = "https://github.com/ukhan1219/dui"
 documentation = "https://github.com/ukhan1219/dui#readme"
 readme = "README.md"
-keywords = ["docker", "cli", "container", "management", "interactive", "terminal"]
+keywords = ["docker", "cli", "container", "management", "terminal"]
 categories = ["command-line-utilities"]
 rust-version = "1.70.0"
 
