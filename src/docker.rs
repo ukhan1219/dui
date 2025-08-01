@@ -48,6 +48,22 @@ pub struct Volume {
     pub mountpoint: String,
 }
 
+#[derive(Debug, Clone)]
+pub struct ContainerProcess {
+    pub user: String,
+    pub pid: String,
+    pub ppid: String,
+    pub cpu: String,
+    pub mem: String,
+    pub vsz: String,
+    pub rss: String,
+    pub tty: String,
+    pub stat: String,
+    pub start: String,
+    pub time: String,
+    pub command: String,
+}
+
 impl DockerClient {
     pub fn new() -> Self {
         DockerClient
@@ -60,6 +76,8 @@ impl DockerClient {
             .map(|output| output.status.success())
             .unwrap_or(false)
     }
+
+    // ===== CONTAINER COMMANDS =====
 
     pub fn create_container(&self, name: &str, image: &str, ports: Option<&str>, volumes: Option<&str>, env: Option<&str>) -> Result<(), String> {
         // Validate container name
@@ -102,6 +120,288 @@ impl DockerClient {
 
         Ok(())
     }
+
+    pub fn attach_container(&self, name: &str) -> Result<(), String> {
+        let mut child = Command::new("docker")
+            .args(&["attach", name])
+            .spawn()
+            .map_err(|e| format!("Failed to attach to container: {}", e))?;
+
+        child.wait()
+            .map_err(|e| format!("Failed to wait for attach process: {}", e))?;
+
+        Ok(())
+    }
+
+    pub fn commit_container(&self, container: &str, repository: &str, tag: Option<&str>) -> Result<(), String> {
+        let mut args = vec!["commit"];
+        
+        if let Some(tag_value) = tag {
+            args.extend_from_slice(&[repository, tag_value]);
+        } else {
+            args.push(repository);
+        }
+        
+        args.push(container);
+
+        let output = Command::new("docker")
+            .args(&args)
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn copy_from_container(&self, container: &str, src_path: &str, dest_path: &str) -> Result<(), String> {
+        let output = Command::new("docker")
+            .args(&["cp", &format!("{}:{}", container, src_path), dest_path])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn copy_to_container(&self, src_path: &str, container: &str, dest_path: &str) -> Result<(), String> {
+        let output = Command::new("docker")
+            .args(&["cp", src_path, &format!("{}:{}", container, dest_path)])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn diff_container(&self, container: &str) -> Result<String, String> {
+        let output = Command::new("docker")
+            .args(&["diff", container])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    }
+
+    pub fn export_container(&self, container: &str, output_file: &str) -> Result<(), String> {
+        let output = Command::new("docker")
+            .args(&["export", "-o", output_file, container])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn get_container_history(&self, image: &str) -> Result<String, String> {
+        let output = Command::new("docker")
+            .args(&["history", image])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    }
+
+    pub fn import_image(&self, file: &str, repository: &str, tag: Option<&str>) -> Result<(), String> {
+        let mut args = vec!["import"];
+        
+        if let Some(tag_value) = tag {
+            args.extend_from_slice(&[repository, tag_value]);
+        } else {
+            args.push(repository);
+        }
+        
+        args.push(file);
+
+        let output = Command::new("docker")
+            .args(&args)
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn kill_container(&self, container: &str, signal: Option<&str>) -> Result<(), String> {
+        let mut args = vec!["kill"];
+        
+        if let Some(sig) = signal {
+            args.extend_from_slice(&["-s", sig]);
+        }
+        
+        args.push(container);
+
+        let output = Command::new("docker")
+            .args(&args)
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn load_image(&self, file: &str) -> Result<(), String> {
+        let output = Command::new("docker")
+            .args(&["load", "-i", file])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn get_container_ports(&self, container: &str) -> Result<String, String> {
+        let output = Command::new("docker")
+            .args(&["port", container])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    }
+
+    pub fn rename_container(&self, old_name: &str, new_name: &str) -> Result<(), String> {
+        let output = Command::new("docker")
+            .args(&["rename", old_name, new_name])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn save_image(&self, image: &str, output_file: &str) -> Result<(), String> {
+        let output = Command::new("docker")
+            .args(&["save", "-o", output_file, image])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn get_container_processes(&self, container: &str) -> Result<Vec<ContainerProcess>, String> {
+        let output = Command::new("docker")
+            .args(&["top", container])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        let mut processes = Vec::new();
+
+        // Skip header line
+        for line in output_str.lines().skip(1) {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 11 {
+                processes.push(ContainerProcess {
+                    user: parts[0].to_string(),
+                    pid: parts[1].to_string(),
+                    ppid: parts[2].to_string(),
+                    cpu: parts[3].to_string(),
+                    mem: parts[4].to_string(),
+                    vsz: parts[5].to_string(),
+                    rss: parts[6].to_string(),
+                    tty: parts[7].to_string(),
+                    stat: parts[8].to_string(),
+                    start: parts[9].to_string(),
+                    time: parts[10].to_string(),
+                    command: parts[11..].join(" "),
+                });
+            }
+        }
+
+        Ok(processes)
+    }
+
+    pub fn update_container(&self, container: &str, cpu_period: Option<&str>, cpu_quota: Option<&str>, 
+                          memory: Option<&str>, memory_swap: Option<&str>) -> Result<(), String> {
+        let mut args = vec!["update"];
+        
+        if let Some(period) = cpu_period {
+            args.extend_from_slice(&["--cpu-period", period]);
+        }
+        
+        if let Some(quota) = cpu_quota {
+            args.extend_from_slice(&["--cpu-quota", quota]);
+        }
+        
+        if let Some(mem) = memory {
+            args.extend_from_slice(&["--memory", mem]);
+        }
+        
+        if let Some(mem_swap) = memory_swap {
+            args.extend_from_slice(&["--memory-swap", mem_swap]);
+        }
+        
+        args.push(container);
+
+        let output = Command::new("docker")
+            .args(&args)
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn wait_for_container(&self, container: &str) -> Result<String, String> {
+        let output = Command::new("docker")
+            .args(&["wait", container])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+    }
+
+    // ===== EXISTING CONTAINER COMMANDS =====
 
     pub fn get_container_info(&self, name: &str) -> Result<String, String> {
         let output = Command::new("docker")
@@ -196,53 +496,6 @@ impl DockerClient {
         Ok(containers)
     }
 
-    pub fn list_images(&self) -> Result<Vec<Image>, String> {
-        let output = Command::new("docker")
-            .args(&["images", "--format", "json"])
-            .output()
-            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
-
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(format!("Docker command failed: {}", stderr));
-        }
-
-        let output_str = String::from_utf8_lossy(&output.stdout);
-        let mut images = Vec::new();
-
-        // Parse JSON output - each line is a separate JSON object
-        for line in output_str.lines() {
-            if line.trim().is_empty() {
-                continue;
-            }
-            
-            match serde_json::from_str::<serde_json::Value>(line) {
-                Ok(json) => {
-                    if let (Some(id), Some(repo), Some(tag), Some(size), Some(created)) = (
-                        json.get("ID").and_then(|v| v.as_str()),
-                        json.get("Repository").and_then(|v| v.as_str()),
-                        json.get("Tag").and_then(|v| v.as_str()),
-                        json.get("Size").and_then(|v| v.as_str()),
-                        json.get("CreatedAt").and_then(|v| v.as_str())
-                    ) {
-                        images.push(Image {
-                            id: id.to_string(),
-                            repository: repo.to_string(),
-                            tag: tag.to_string(),
-                            size: size.to_string(),
-                            created: created.to_string(),
-                        });
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Failed to parse image JSON: {} for line: {}", e, line);
-                }
-            }
-        }
-
-        Ok(images)
-    }
-
     pub fn start_container(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
             .args(&["start", name])
@@ -272,32 +525,6 @@ impl DockerClient {
     pub fn remove_container(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
             .args(&["rm", name])
-            .output()
-            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
-
-        if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).to_string());
-        }
-
-        Ok(())
-    }
-
-    pub fn pull_image(&self, name: &str) -> Result<(), String> {
-        let output = Command::new("docker")
-            .args(&["pull", name])
-            .output()
-            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
-
-        if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).to_string());
-        }
-
-        Ok(())
-    }
-
-    pub fn remove_image(&self, name: &str) -> Result<(), String> {
-        let output = Command::new("docker")
-            .args(&["rmi", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -370,39 +597,6 @@ impl DockerClient {
         Ok(stats)
     }
 
-    pub fn get_system_info(&self) -> Result<String, String> {
-        let output = Command::new("docker")
-            .args(&["system", "info"])
-            .output()
-            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
-
-        if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).to_string());
-        }
-
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
-    }
-
-    pub fn monitor_events(&self) -> Result<(), String> {
-        let mut child = Command::new("docker")
-            .args(&["events"])
-            .stdout(Stdio::piped())
-            .spawn()
-            .map_err(|e| format!("Failed to start docker events: {}", e))?;
-
-        if let Some(stdout) = child.stdout.take() {
-            let reader = BufReader::new(stdout);
-            for line in reader.lines() {
-                match line {
-                    Ok(event) => println!("{}", event),
-                    Err(e) => eprintln!("Error reading event: {}", e),
-                }
-            }
-        }
-
-        Ok(())
-    }
-
     pub fn restart_container(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
             .args(&["restart", name])
@@ -468,6 +662,157 @@ impl DockerClient {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
     }
 
+    // ===== IMAGE COMMANDS =====
+
+    pub fn list_images(&self) -> Result<Vec<Image>, String> {
+        let output = Command::new("docker")
+            .args(&["images", "--format", "json"])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Docker command failed: {}", stderr));
+        }
+
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        let mut images = Vec::new();
+
+        // Parse JSON output - each line is a separate JSON object
+        for line in output_str.lines() {
+            if line.trim().is_empty() {
+                continue;
+            }
+            
+            match serde_json::from_str::<serde_json::Value>(line) {
+                Ok(json) => {
+                    if let (Some(id), Some(repo), Some(tag), Some(size), Some(created)) = (
+                        json.get("ID").and_then(|v| v.as_str()),
+                        json.get("Repository").and_then(|v| v.as_str()),
+                        json.get("Tag").and_then(|v| v.as_str()),
+                        json.get("Size").and_then(|v| v.as_str()),
+                        json.get("CreatedAt").and_then(|v| v.as_str())
+                    ) {
+                        images.push(Image {
+                            id: id.to_string(),
+                            repository: repo.to_string(),
+                            tag: tag.to_string(),
+                            size: size.to_string(),
+                            created: created.to_string(),
+                        });
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to parse image JSON: {} for line: {}", e, line);
+                }
+            }
+        }
+
+        Ok(images)
+    }
+
+    pub fn pull_image(&self, name: &str) -> Result<(), String> {
+        let output = Command::new("docker")
+            .args(&["pull", name])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn remove_image(&self, name: &str) -> Result<(), String> {
+        let output = Command::new("docker")
+            .args(&["rmi", name])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn build_image(&self, path: &str, tag: &str) -> Result<(), String> {
+        let output = Command::new("docker")
+            .args(&["build", "-t", tag, path])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn tag_image(&self, source: &str, target: &str) -> Result<(), String> {
+        let output = Command::new("docker")
+            .args(&["tag", source, target])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    pub fn push_image(&self, name: &str) -> Result<(), String> {
+        let output = Command::new("docker")
+            .args(&["push", name])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(())
+    }
+
+    // ===== SYSTEM COMMANDS =====
+
+    pub fn get_system_info(&self) -> Result<String, String> {
+        let output = Command::new("docker")
+            .args(&["system", "info"])
+            .output()
+            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
+
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
+        }
+
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    }
+
+    pub fn monitor_events(&self) -> Result<(), String> {
+        let mut child = Command::new("docker")
+            .args(&["events"])
+            .stdout(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("Failed to start docker events: {}", e))?;
+
+        if let Some(stdout) = child.stdout.take() {
+            let reader = BufReader::new(stdout);
+            for line in reader.lines() {
+                match line {
+                    Ok(event) => println!("{}", event),
+                    Err(e) => eprintln!("Error reading event: {}", e),
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    // ===== NETWORK COMMANDS =====
+
     pub fn list_networks(&self) -> Result<Vec<Network>, String> {
         let output = Command::new("docker")
             .args(&["network", "ls", "--format", "json"])
@@ -512,6 +857,8 @@ impl DockerClient {
         Ok(networks)
     }
 
+    // ===== VOLUME COMMANDS =====
+
     pub fn list_volumes(&self) -> Result<Vec<Volume>, String> {
         let output = Command::new("docker")
             .args(&["volume", "ls", "--format", "json"])
@@ -552,44 +899,5 @@ impl DockerClient {
         }
 
         Ok(volumes)
-    }
-
-    pub fn build_image(&self, path: &str, tag: &str) -> Result<(), String> {
-        let output = Command::new("docker")
-            .args(&["build", "-t", tag, path])
-            .output()
-            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
-
-        if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).to_string());
-        }
-
-        Ok(())
-    }
-
-    pub fn tag_image(&self, source: &str, target: &str) -> Result<(), String> {
-        let output = Command::new("docker")
-            .args(&["tag", source, target])
-            .output()
-            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
-
-        if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).to_string());
-        }
-
-        Ok(())
-    }
-
-    pub fn push_image(&self, name: &str) -> Result<(), String> {
-        let output = Command::new("docker")
-            .args(&["push", name])
-            .output()
-            .map_err(|e| format!("Failed to execute docker command: {}", e))?;
-
-        if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).to_string());
-        }
-
-        Ok(())
     }
 }
