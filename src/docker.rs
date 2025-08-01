@@ -123,7 +123,7 @@ impl DockerClient {
 
     pub fn attach_container(&self, name: &str) -> Result<(), String> {
         let mut child = Command::new("docker")
-            .args(&["attach", name])
+            .args(["attach", name])
             .spawn()
             .map_err(|e| format!("Failed to attach to container: {}", e))?;
 
@@ -158,7 +158,7 @@ impl DockerClient {
 
     pub fn copy_from_container(&self, container: &str, src_path: &str, dest_path: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["cp", &format!("{}:{}", container, src_path), dest_path])
+            .args(["cp", &format!("{}:{}", container, src_path), dest_path])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -169,9 +169,10 @@ impl DockerClient {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn copy_to_container(&self, src_path: &str, container: &str, dest_path: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["cp", src_path, &format!("{}:{}", container, dest_path)])
+            .args(["cp", src_path, &format!("{}:{}", container, dest_path)])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -184,7 +185,7 @@ impl DockerClient {
 
     pub fn diff_container(&self, container: &str) -> Result<String, String> {
         let output = Command::new("docker")
-            .args(&["diff", container])
+            .args(["diff", container])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -197,7 +198,7 @@ impl DockerClient {
 
     pub fn export_container(&self, container: &str, output_file: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["export", "-o", output_file, container])
+            .args(["export", "-o", output_file, container])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -210,7 +211,7 @@ impl DockerClient {
 
     pub fn get_container_history(&self, image: &str) -> Result<String, String> {
         let output = Command::new("docker")
-            .args(&["history", image])
+            .args(["history", image])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -267,7 +268,7 @@ impl DockerClient {
 
     pub fn load_image(&self, file: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["load", "-i", file])
+            .args(["load", "-i", file])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -280,7 +281,7 @@ impl DockerClient {
 
     pub fn get_container_ports(&self, container: &str) -> Result<String, String> {
         let output = Command::new("docker")
-            .args(&["port", container])
+            .args(["port", container])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -293,7 +294,7 @@ impl DockerClient {
 
     pub fn rename_container(&self, old_name: &str, new_name: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["rename", old_name, new_name])
+            .args(["rename", old_name, new_name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -306,7 +307,7 @@ impl DockerClient {
 
     pub fn save_image(&self, image: &str, output_file: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["save", "-o", output_file, image])
+            .args(["save", "-o", output_file, image])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -319,7 +320,7 @@ impl DockerClient {
 
     pub fn get_container_processes(&self, container: &str) -> Result<Vec<ContainerProcess>, String> {
         let output = Command::new("docker")
-            .args(&["top", container])
+            .args(["top", container])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -390,7 +391,7 @@ impl DockerClient {
 
     pub fn wait_for_container(&self, container: &str) -> Result<String, String> {
         let output = Command::new("docker")
-            .args(&["wait", container])
+            .args(["wait", container])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -405,7 +406,7 @@ impl DockerClient {
 
     pub fn get_container_info(&self, name: &str) -> Result<String, String> {
         let output = Command::new("docker")
-            .args(&["inspect", name])
+            .args(["inspect", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -418,7 +419,7 @@ impl DockerClient {
 
     pub fn get_container_size(&self, name: &str) -> Result<String, String> {
         let output = Command::new("docker")
-            .args(&["ps", "-s", "--format", "json", "--filter", &format!("name={}", name)])
+            .args(["ps", "-s", "--format", "json", "--filter", &format!("name={}", name)])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -451,7 +452,7 @@ impl DockerClient {
 
     pub fn list_containers(&self) -> Result<Vec<Container>, String> {
         let output = Command::new("docker")
-            .args(&["ps", "-a", "--format", "json"])
+            .args(["ps", "-a", "--format", "json"])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -498,7 +499,7 @@ impl DockerClient {
 
     pub fn start_container(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["start", name])
+            .args(["start", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -511,7 +512,7 @@ impl DockerClient {
 
     pub fn stop_container(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["stop", name])
+            .args(["stop", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -524,7 +525,7 @@ impl DockerClient {
 
     pub fn remove_container(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["rm", name])
+            .args(["rm", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -537,7 +538,7 @@ impl DockerClient {
 
     pub fn get_container_logs(&self, name: &str) -> Result<String, String> {
         let output = Command::new("docker")
-            .args(&["logs", "--tail", "50", name])
+            .args(["logs", "--tail", "50", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -550,7 +551,7 @@ impl DockerClient {
 
     pub fn get_container_stats(&self) -> Result<Vec<ContainerStats>, String> {
         let output = Command::new("docker")
-            .args(&["stats", "--no-stream", "--format", "json"])
+            .args(["stats", "--no-stream", "--format", "json"])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -599,7 +600,7 @@ impl DockerClient {
 
     pub fn restart_container(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["restart", name])
+            .args(["restart", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -612,7 +613,7 @@ impl DockerClient {
 
     pub fn pause_container(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["pause", name])
+            .args(["pause", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -625,7 +626,7 @@ impl DockerClient {
 
     pub fn unpause_container(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["unpause", name])
+            .args(["unpause", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -638,7 +639,7 @@ impl DockerClient {
 
     pub fn exec_container(&self, name: &str, command: &str) -> Result<String, String> {
         let output = Command::new("docker")
-            .args(&["exec", name, "sh", "-c", command])
+            .args(["exec", name, "sh", "-c", command])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -651,7 +652,7 @@ impl DockerClient {
 
     pub fn inspect_container(&self, name: &str) -> Result<String, String> {
         let output = Command::new("docker")
-            .args(&["inspect", name])
+            .args(["inspect", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -666,7 +667,7 @@ impl DockerClient {
 
     pub fn list_images(&self) -> Result<Vec<Image>, String> {
         let output = Command::new("docker")
-            .args(&["images", "--format", "json"])
+            .args(["images", "--format", "json"])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -713,7 +714,7 @@ impl DockerClient {
 
     pub fn pull_image(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["pull", name])
+            .args(["pull", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -726,7 +727,7 @@ impl DockerClient {
 
     pub fn remove_image(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["rmi", name])
+            .args(["rmi", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -739,7 +740,7 @@ impl DockerClient {
 
     pub fn build_image(&self, path: &str, tag: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["build", "-t", tag, path])
+            .args(["build", "-t", tag, path])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -752,7 +753,7 @@ impl DockerClient {
 
     pub fn tag_image(&self, source: &str, target: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["tag", source, target])
+            .args(["tag", source, target])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -765,7 +766,7 @@ impl DockerClient {
 
     pub fn push_image(&self, name: &str) -> Result<(), String> {
         let output = Command::new("docker")
-            .args(&["push", name])
+            .args(["push", name])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -780,7 +781,7 @@ impl DockerClient {
 
     pub fn get_system_info(&self) -> Result<String, String> {
         let output = Command::new("docker")
-            .args(&["system", "info"])
+            .args(["system", "info"])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -793,7 +794,7 @@ impl DockerClient {
 
     pub fn monitor_events(&self) -> Result<(), String> {
         let mut child = Command::new("docker")
-            .args(&["events"])
+            .args(["events"])
             .stdout(Stdio::piped())
             .spawn()
             .map_err(|e| format!("Failed to start docker events: {}", e))?;
@@ -815,7 +816,7 @@ impl DockerClient {
 
     pub fn list_networks(&self) -> Result<Vec<Network>, String> {
         let output = Command::new("docker")
-            .args(&["network", "ls", "--format", "json"])
+            .args(["network", "ls", "--format", "json"])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
@@ -861,7 +862,7 @@ impl DockerClient {
 
     pub fn list_volumes(&self) -> Result<Vec<Volume>, String> {
         let output = Command::new("docker")
-            .args(&["volume", "ls", "--format", "json"])
+            .args(["volume", "ls", "--format", "json"])
             .output()
             .map_err(|e| format!("Failed to execute docker command: {}", e))?;
 
