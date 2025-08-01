@@ -37,6 +37,9 @@ jobs:
           target: ${{ matrix.target }}
           override: true
       
+      - name: Install target
+        run: rustup target add ${{ matrix.target }}
+      
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
       
