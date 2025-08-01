@@ -3,6 +3,11 @@
 **/*.rs.bk
 Cargo.lock
 
+
+.github
+Formula
+scripts
+
 # IDE
 .vscode/
 .idea/
@@ -28,6 +33,3 @@ Thumbs.db
 
 # Documentation
 /docs/site/
-/.github/
-/Formula/
-/scripts/
