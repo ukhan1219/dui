@@ -105,16 +105,18 @@ jobs:
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Create Release with Assets
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
-          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          name: Release ${{ steps.get_version.outputs.VERSION }}
           draft: false
           prerelease: false
+          files: |
+            ./dui-x86_64-apple-darwin/dui-x86_64-apple-darwin.tar.gz
+            ./dui-aarch64-apple-darwin/dui-aarch64-apple-darwin.tar.gz
           body: |
             ## What's Changed
             
@@ -144,26 +146,6 @@ jobs:
             
             - macOS (Intel x86_64)
             - macOS (Apple Silicon ARM64)
-
-      - name: Upload Release Assets
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dui-x86_64-apple-darwin/dui-x86_64-apple-darwin.tar.gz
-          asset_name: dui-x86_64-apple-darwin.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Upload Release Assets ARM64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dui-aarch64-apple-darwin/dui-aarch64-apple-darwin.tar.gz
-          asset_name: dui-aarch64-apple-darwin.tar.gz
-          asset_content_type: application/gzip
 
       - name: Generate SHA256 hashes
         run: |
