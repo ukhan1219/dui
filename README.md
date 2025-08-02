@@ -50,6 +50,14 @@ cargo install dui-cli
 #### Manual Installation
 Download the latest release from [GitHub Releases](https://github.com/ukhan1219/dui/releases) and add the binary to your PATH.
 
+#### From Source
+```bash
+git clone https://github.com/ukhan1219/dui.git
+cd dui
+cargo build --release
+cargo install --path .
+```
+
 ## 📖 Usage
 
 ### Basic Commands
@@ -313,26 +321,77 @@ dui interactive
 - **Volume Management**: List and inspect Docker volumes
 - **Resource Discovery**: Easy discovery of Docker resources
 
-## 🔧 Technical Improvements
+## 🔧 Technical Architecture
 
-- **Enhanced error handling** and validation
-- **Improved user interface** with better formatting
-- **Added comprehensive documentation**
-- **Better performance** and reliability
-- **Full Docker CLI command parity**
-- **Advanced tab completion** for all commands
-- **Interactive command builders** with validation
+### Core Components
+
+- **CLI Layer** (`main.rs`): Command parsing and routing with comprehensive argument handling
+- **Docker Integration** (`docker.rs`): Complete Docker API wrapper with 40+ command implementations
+- **User Interface** (`ui.rs`): Enhanced UI with color-coded output and interactive menus
+- **Tab Completion** (`completion.rs`): Intelligent command completion using rustyline
+- **Visual Charts** (`charts.rs`): Real-time chart rendering with ASCII art
+- **Utilities** (`utils.rs`): Shared helper functions and validation
+
+### Dependencies
+
+- **clap**: Command-line argument parsing
+- **colored**: Terminal color support
+- **rustyline**: Interactive line editing with tab completion
+- **crossterm**: Cross-platform terminal manipulation
+- **tui**: Terminal UI components
+- **serde**: Serialization/deserialization
+- **tokio**: Async runtime (optional)
+
+### Build Configuration
+
+- **Rust Version**: 1.70.0+
+- **Optimization**: LTO enabled for release builds
+- **Panic Strategy**: Abort on panic for smaller binaries
+- **Code Generation**: Single codegen unit for better optimization
+
+## 🚀 Performance & Reliability
+
+- **Fast Startup**: Optimized binary with minimal dependencies
+- **Memory Efficient**: Low memory footprint for long-running sessions
+- **Error Handling**: Comprehensive error handling with user-friendly messages
+- **Validation**: Input validation for all commands and parameters
+- **Cross-Platform**: Works on macOS, Linux, and Windows
 
 ## 📚 Documentation
 
-- **Updated README** with all new features and examples
-- **Added detailed usage instructions**
+- **Updated README** with all features and examples
 - **Comprehensive command reference**
 - **Interactive mode guide**
+- **Setup and deployment documentation** (see `SETUP.md`)
+- **Contributing guidelines**
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Please see our contributing guidelines:
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes** and add tests
+4. **Commit your changes**: `git commit -m 'Add amazing feature'`
+5. **Push to the branch**: `git push origin feature/amazing-feature`
+6. **Open a Pull Request**
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/ukhan1219/dui.git
+cd dui
+
+# Build the project
+cargo build
+
+# Run tests
+cargo test
+
+# Install locally
+cargo install --path .
+```
 
 ## 📄 License
 
