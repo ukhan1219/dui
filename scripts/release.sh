@@ -221,6 +221,9 @@ update_homebrew_formula() {
     # Update version in Homebrew formula
     sed -i.bak "s/refs\/tags\/v[0-9]\+\.[0-9]\+\.[0-9]\+/refs\/tags\/v$version/g" Formula/dui.rb
     
+    # Clean up backup file
+    rm -f Formula/dui.rb.bak
+    
     print_success "Homebrew formula updated"
     print_warning "Note: SHA256 hash will need to be updated after GitHub release is created"
 }
@@ -320,6 +323,9 @@ release() {
     print_success "Release process completed!"
     print_status "GitHub Actions will now build and publish the release"
     print_status "Monitor the workflow at: https://github.com/ukhan1219/dui/actions"
+    
+    # Clean up temporary files
+    rm -f "release_notes_$new_version.md" Formula/dui.rb.bak 2>/dev/null
     
     # Show next steps
     echo
