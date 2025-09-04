@@ -63,6 +63,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.1.12] - 2025-09-04
 
+### Fixed
+- Resolved git synchronization issues during release process
+- Improved release workflow reliability
+
 ## [Unreleased]
 
 ### Added
