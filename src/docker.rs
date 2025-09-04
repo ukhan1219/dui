@@ -1,5 +1,5 @@
 use std::process::{Command, Stdio};
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::thread;
 use std::time::Duration;
 use crate::utils::{validate_container_name, validate_image_name, format_size};
@@ -103,10 +103,14 @@ impl DockerClient {
         let docker_desktop_paths = [
             "/Applications/Docker.app",
             "/System/Applications/Docker.app",
+            "/Applications/Docker Desktop.app",  // Modern Docker Desktop path
         ];
+
+        println!("🐳 Docker is not running. Attempting to start Docker Desktop...");
 
         for path in &docker_desktop_paths {
             if std::path::Path::new(path).exists() {
+                println!("   Starting Docker from: {}", path);
                 Command::new("open")
                     .arg("-a")
                     .arg(path)
@@ -119,13 +123,36 @@ impl DockerClient {
         }
 
         // Try using brew services if Docker Desktop is not found
+        println!("   Docker Desktop not found in standard locations, trying brew services...");
         let output = Command::new("brew")
             .args(["services", "start", "docker"])
             .output();
 
         match output {
-            Ok(output) if output.status.success() => self.wait_for_docker_daemon(),
-            _ => Err("Docker Desktop not found. Please install Docker Desktop or start Docker daemon manually.".to_string()),
+            Ok(output) if output.status.success() => {
+                println!("   Started Docker via Homebrew services");
+                self.wait_for_docker_daemon()
+            },
+            _ => {
+                // Try using the Docker CLI to start if it exists
+                if std::path::Path::new("/usr/local/bin/docker").exists() || 
+                   std::path::Path::new("/opt/homebrew/bin/docker").exists() {
+                    println!("   Trying alternative Docker startup methods...");
+                    // Sometimes Docker is installed but Desktop isn't running - try open by app name
+                    let result = Command::new("open")
+                        .arg("-a")
+                        .arg("Docker Desktop")
+                        .output();
+                    
+                    if let Ok(output) = result {
+                        if output.status.success() {
+                            return self.wait_for_docker_daemon();
+                        }
+                    }
+                }
+                
+                Err("Docker Desktop not found. Please install Docker Desktop or start Docker daemon manually.\nVisit: https://docs.docker.com/desktop/install/mac/".to_string())
+            },
         }
     }
 
@@ -196,23 +223,32 @@ impl DockerClient {
         let max_attempts = 30;
         let delay = Duration::from_secs(2);
         
+        println!("   Waiting for Docker daemon to start...");
+        print!("   ");
+        std::io::stdout().flush().unwrap();
+        
         for attempt in 1..=max_attempts {
             if self.is_docker_daemon_running() {
+                println!("\n✅ Docker is now running!");
                 return Ok(());
             }
             
             if attempt < max_attempts {
+                print!(".");
+                std::io::stdout().flush().unwrap();
                 thread::sleep(delay);
             }
         }
         
+        println!("\n❌ Docker daemon failed to start within expected time (60 seconds).");
+        println!("   Please try starting Docker Desktop manually or check your Docker installation.");
         Err("Docker daemon failed to start within expected time (60 seconds). Please check Docker installation.".to_string())
     }
 
     pub fn ensure_docker_is_running(&self) -> Result<(), String> {
         // First check if docker command is available
         if !self.is_docker_available() {
-            return Err("Docker is not installed. Please install Docker first.".to_string());
+            return Err("Docker is not installed. Please install Docker first.\nVisit: https://docs.docker.com/desktop/install/mac/".to_string());
         }
 
         // Check if daemon is running
@@ -220,8 +256,40 @@ impl DockerClient {
             return Ok(());
         }
 
+        // Print debug information
+        println!("🔍 Docker diagnosis:");
+        println!("   - Docker CLI: ✅ Available");
+        println!("   - Docker Daemon: ❌ Not running");
+        
+        // Get more detailed error information
+        let daemon_check = Command::new("docker")
+            .args(["info"])
+            .output();
+            
+        if let Ok(output) = daemon_check {
+            if !output.stderr.is_empty() {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                if stderr.contains("Cannot connect to the Docker daemon") {
+                    println!("   - Error: Cannot connect to Docker daemon");
+                    if stderr.contains("docker.sock") {
+                        println!("   - Socket: Docker socket not available");
+                    }
+                }
+            }
+        }
+
         // Try to start the daemon
-        self.start_docker_daemon()
+        match self.start_docker_daemon() {
+            Ok(()) => Ok(()),
+            Err(e) => {
+                println!("❌ Failed to auto-start Docker: {}", e);
+                println!("\n🛠️  Manual alternatives:");
+                println!("   1. Open Docker Desktop manually");
+                println!("   2. Run: open -a 'Docker Desktop'");
+                println!("   3. Check if Docker Desktop is installed");
+                Err(e)
+            }
+        }
     }
 
     // ===== CONTAINER COMMANDS =====
