@@ -51,6 +51,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.1.11] - 2025-09-04
 
+### Added
+- 🐳 **Docker Auto-Start**: Automatically detects and starts Docker Desktop when not running
+- Enhanced user feedback with visual indicators and progress updates during Docker startup
+- Intelligent Docker Desktop path detection for modern macOS installations
+
+### Improved  
+- Better error handling with detailed diagnosis when Docker fails to start
+- Added helpful manual alternatives when auto-start fails
+- More robust Docker daemon connection detection
+
 ## [Unreleased]
 
 ### Added
