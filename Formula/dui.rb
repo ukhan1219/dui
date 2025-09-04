@@ -1,8 +1,8 @@
 class Dui < Formula
   desc "Docker management CLI built in Rust"
   homepage "https://github.com/ukhan1219/dui"
-  url "https://github.com/ukhan1219/dui/archive/refs/tags/v4.1.10.tar.gz"
-  sha256 "504a994010938bb57f7aa7c86109522d4bd94b8335e67ff6da093167ecd66b7b"
+  url "https://github.com/ukhan1219/dui/archive/refs/tags/v4.1.11.tar.gz"
+  sha256 "a7f8d511f1e6adfcd7a23f58119e1b36ee23860d3bbce1d03984f53f17512ad1"
   license "MIT"
   head "https://github.com/ukhan1219/dui.git", branch: "main"
 
