@@ -46,15 +46,18 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          gh release create "v$VERSION" \
+            --title "Release v$VERSION" \
+            --notes-file release_notes.md \
+            --latest
+          
+          # Get the upload URL for compatibility with existing jobs
+          UPLOAD_URL=$(gh api repos/${{ github.repository }}/releases/tags/v$VERSION --jq '.upload_url')
+          echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release v${{ steps.get_version.outputs.version }}
-          body_path: release_notes.md
-          draft: false
-          prerelease: false
 
   build-and-upload:
     name: Build and Upload
@@ -126,14 +129,12 @@ jobs:
         shell: bash
 
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          gh release upload "v$VERSION" \
+            "target/${{ matrix.target }}/release/${{ matrix.artifact_name }}#${{ matrix.asset_name }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
-          asset_name: ${{ matrix.asset_name }}
-          asset_content_type: application/octet-stream
 
   publish-cargo:
     name: Publish to crates.io

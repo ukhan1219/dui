@@ -5,11 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.1.0] - 2025-09-04
+## [4.1.2] - 2025-09-04
+
+### Fixed
+- Clean up temporary files in release script to prevent cargo publish failures
+- Improved release automation workflow
 
 ## [4.1.1] - 2025-09-04
 
-## [4.1.2] - 2025-09-04
+### Fixed  
+- Resolved cargo publish failures caused by untracked temporary files
+- Fixed version consistency across release process
+
+## [4.1.0] - 2025-09-04
+
+### Added
+- Docker daemon auto-start functionality - automatically starts Docker if not running
+- Comprehensive release management system with Cargo publishing  
+- Automated changelog generation and release notes
+- Enhanced version management and iteration system
+
+### Changed
+- Improved Docker availability checking with daemon status verification
+- Enhanced error messages with actionable suggestions
+- Better user feedback during Docker initialization
+
+### Fixed
+- Docker service detection across different platforms (macOS, Linux, Windows)
 
 ## [Unreleased]
 
