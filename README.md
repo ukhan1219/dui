@@ -10,6 +10,12 @@ DUI provides a beautiful, intuitive interface for Docker management with **100% 
 
 ## ✨ Features
 
+### 🚀 Intelligent Docker Management
+- **Auto-Start Docker Daemon** - Automatically detects and starts Docker if not running
+- **Cross-Platform Support** - Works on macOS, Linux, and Windows
+- **Smart Error Handling** - Provides helpful suggestions when Docker issues occur
+- **Graceful Startup** - Waits for Docker daemon to be ready before proceeding
+
 ### 🐳 Complete Docker Command Parity
 - **All 40+ Docker commands** supported with intuitive interfaces
 - Container lifecycle management (create, start, stop, restart, pause, unpause, remove)

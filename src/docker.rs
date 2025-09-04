@@ -1,5 +1,7 @@
 use std::process::{Command, Stdio};
 use std::io::{BufRead, BufReader};
+use std::thread;
+use std::time::Duration;
 use crate::utils::{validate_container_name, validate_image_name, format_size};
 
 #[derive(Clone)]
@@ -75,6 +77,151 @@ impl DockerClient {
             .output()
             .map(|output| output.status.success())
             .unwrap_or(false)
+    }
+
+    pub fn is_docker_daemon_running(&self) -> bool {
+        Command::new("docker")
+            .args(["info"])
+            .output()
+            .map(|output| output.status.success())
+            .unwrap_or(false)
+    }
+
+    pub fn start_docker_daemon(&self) -> Result<(), String> {
+        let os = std::env::consts::OS;
+        
+        match os {
+            "macos" => self.start_docker_daemon_macos(),
+            "linux" => self.start_docker_daemon_linux(),
+            "windows" => self.start_docker_daemon_windows(),
+            _ => Err(format!("Unsupported operating system: {}", os)),
+        }
+    }
+
+    fn start_docker_daemon_macos(&self) -> Result<(), String> {
+        // Try to start Docker Desktop on macOS
+        let docker_desktop_paths = [
+            "/Applications/Docker.app",
+            "/System/Applications/Docker.app",
+        ];
+
+        for path in &docker_desktop_paths {
+            if std::path::Path::new(path).exists() {
+                Command::new("open")
+                    .arg("-a")
+                    .arg(path)
+                    .output()
+                    .map_err(|e| format!("Failed to start Docker Desktop: {}", e))?;
+                
+                // Wait for Docker daemon to start
+                return self.wait_for_docker_daemon();
+            }
+        }
+
+        // Try using brew services if Docker Desktop is not found
+        let output = Command::new("brew")
+            .args(["services", "start", "docker"])
+            .output();
+
+        match output {
+            Ok(output) if output.status.success() => self.wait_for_docker_daemon(),
+            _ => Err("Docker Desktop not found. Please install Docker Desktop or start Docker daemon manually.".to_string()),
+        }
+    }
+
+    fn start_docker_daemon_linux(&self) -> Result<(), String> {
+        // Try systemctl first (most common on modern Linux distros)
+        let systemctl_result = Command::new("sudo")
+            .args(["systemctl", "start", "docker"])
+            .output();
+
+        if let Ok(output) = systemctl_result {
+            if output.status.success() {
+                return self.wait_for_docker_daemon();
+            }
+        }
+
+        // Try service command as fallback
+        let service_result = Command::new("sudo")
+            .args(["service", "docker", "start"])
+            .output();
+
+        if let Ok(output) = service_result {
+            if output.status.success() {
+                return self.wait_for_docker_daemon();
+            }
+        }
+
+        // Try direct daemon start as last resort
+        let daemon_result = Command::new("sudo")
+            .args(["dockerd", "&"])
+            .output();
+
+        match daemon_result {
+            Ok(output) if output.status.success() => self.wait_for_docker_daemon(),
+            _ => Err("Failed to start Docker daemon. Please start Docker manually or check your Docker installation.".to_string()),
+        }
+    }
+
+    fn start_docker_daemon_windows(&self) -> Result<(), String> {
+        // Try to start Docker Desktop on Windows
+        let docker_desktop_paths = [
+            "C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe",
+            "C:\\Program Files (x86)\\Docker\\Docker\\Docker Desktop.exe",
+        ];
+
+        for path in &docker_desktop_paths {
+            if std::path::Path::new(path).exists() {
+                Command::new("cmd")
+                    .args(["/C", "start", "", path])
+                    .output()
+                    .map_err(|e| format!("Failed to start Docker Desktop: {}", e))?;
+                
+                return self.wait_for_docker_daemon();
+            }
+        }
+
+        // Try PowerShell command
+        let ps_result = Command::new("powershell")
+            .args(["-Command", "Start-Service", "docker"])
+            .output();
+
+        match ps_result {
+            Ok(output) if output.status.success() => self.wait_for_docker_daemon(),
+            _ => Err("Docker Desktop not found. Please install Docker Desktop or start Docker service manually.".to_string()),
+        }
+    }
+
+    fn wait_for_docker_daemon(&self) -> Result<(), String> {
+        let max_attempts = 30;
+        let delay = Duration::from_secs(2);
+        
+        for attempt in 1..=max_attempts {
+            if self.is_docker_daemon_running() {
+                return Ok(());
+            }
+            
+            if attempt < max_attempts {
+                thread::sleep(delay);
+            }
+        }
+        
+        Err("Docker daemon failed to start within expected time (60 seconds). Please check Docker installation.".to_string())
+    }
+
+    pub fn ensure_docker_is_running(&self) -> Result<(), String> {
+        // First check if docker command is available
+        if !self.is_docker_available() {
+            return Err("Docker is not installed. Please install Docker first.".to_string());
+        }
+
+        // Check if daemon is running
+        if self.is_docker_daemon_running() {
+            return Ok(());
+        }
+
+        // Try to start the daemon
+        self.start_docker_daemon()
     }
 
     // ===== CONTAINER COMMANDS =====
@@ -451,6 +598,9 @@ impl DockerClient {
     }
 
     pub fn list_containers(&self) -> Result<Vec<Container>, String> {
+        // Ensure Docker is running before attempting command
+        self.ensure_docker_is_running()?;
+        
         let output = Command::new("docker")
             .args(["ps", "-a", "--format", "json"])
             .output()
@@ -550,6 +700,9 @@ impl DockerClient {
     }
 
     pub fn get_container_stats(&self) -> Result<Vec<ContainerStats>, String> {
+        // Ensure Docker is running before attempting command
+        self.ensure_docker_is_running()?;
+        
         let output = Command::new("docker")
             .args(["stats", "--no-stream", "--format", "json"])
             .output()
@@ -666,6 +819,9 @@ impl DockerClient {
     // ===== IMAGE COMMANDS =====
 
     pub fn list_images(&self) -> Result<Vec<Image>, String> {
+        // Ensure Docker is running before attempting command
+        self.ensure_docker_is_running()?;
+        
         let output = Command::new("docker")
             .args(["images", "--format", "json"])
             .output()
@@ -780,6 +936,9 @@ impl DockerClient {
     // ===== SYSTEM COMMANDS =====
 
     pub fn get_system_info(&self) -> Result<String, String> {
+        // Ensure Docker is running before attempting command
+        self.ensure_docker_is_running()?;
+        
         let output = Command::new("docker")
             .args(["system", "info"])
             .output()

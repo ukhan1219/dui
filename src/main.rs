@@ -211,11 +211,7 @@ fn main() {
     let ui = UserInterface::new();
     let charts = ChartRenderer::new();
 
-    // Check if Docker is available
-    if !docker_client.is_docker_available() {
-        ui.show_error("Docker is not available. Please make sure Docker is installed and running.");
-        return;
-    }
+    // Docker auto-start will happen automatically when needed
 
     match matches.subcommand() {
         ("containers", Some(sub_matches)) => {
