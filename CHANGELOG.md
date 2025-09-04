@@ -61,7 +61,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added helpful manual alternatives when auto-start fails
 - More robust Docker daemon connection detection
 
+## [4.1.12] - 2025-09-04
+
 ## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
 
 ### Added
 
