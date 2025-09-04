@@ -135,8 +135,9 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
           # Remove existing asset if it exists to avoid conflicts
           gh release delete-asset "v$VERSION" "${{ matrix.asset_name }}" --yes || true
-          gh release upload "v$VERSION" \
-            "target/${{ matrix.target }}/release/${{ matrix.artifact_name }}#${{ matrix.asset_name }}"
+          # Copy the binary with the desired asset name for proper uploading
+          cp "target/${{ matrix.target }}/release/${{ matrix.artifact_name }}" "${{ matrix.asset_name }}"
+          gh release upload "v$VERSION" "${{ matrix.asset_name }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -151,7 +152,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+
+      uses: dtolnay/rust-toolchain@stable
 
       - name: Login to crates.io
         run: cargo login ${{ secrets.CARGO_TOKEN }}
