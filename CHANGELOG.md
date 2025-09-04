@@ -33,7 +33,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Docker service detection across different platforms (macOS, Linux, Windows)
 
+## [4.1.3] - 2025-09-04
+
 ## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
 
 ### Added
 
